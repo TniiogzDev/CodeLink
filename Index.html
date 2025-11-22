@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Inventario AV</title>
+    <style>
+        /* Estilos CSS BÁSICOS */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f9;
+        }
+        h1 {
+            color: #333;
+            border-bottom: 2px solid #ccc;
+            padding-bottom: 10px;
+        }
+        .container {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .form-grid label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+        }
+        .form-grid input, .form-grid select, .form-grid textarea {
+            width: 95%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .full-width {
+            grid-column: span 3;
+        }
+        button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-right: 10px;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        #addButton {
+            background-color: #007bff;
+            color: white;
+        }
+        #addButton:hover {
+            background-color: #0056b3;
+        }
+        #exportButton {
+            background-color: #28a745;
+            color: white;
+        }
+        #exportButton:hover {
+            background-color: #1e7e34;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+            cursor: pointer; /* Para indicar que es posible ordenar */
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Gestión de Inventario de Audio y Video</h1>
+
+    <div class="form-grid">
+        <div>
+            <label for="assetID">ID de Activo</label>
+            <input type="text" id="assetID" required>
+        </div>
+        <div>
+            <label for="category">Categoría</label>
+            <select id="category" required>
+                <option value="">Seleccione...</option>
+                <option value="Cámara">Cámara</option>
+                <option value="Lente">Lente</option>
+                <option value="Micrófono">Micrófono</option>
+                <option value="Iluminación">Iluminación</option>
+                <option value="Grabadora">Grabadora/Deck</option>
+                <option value="Accesorio">Accesorio/Soporte</option>
+                <option value="Cable">Cable</option>
+            </select>
+        </div>
+        <div>
+            <label for="model">Tipo/Modelo</label>
+            <input type="text" id="model" required>
+        </div>
+        <div>
+            <label for="brand">Marca</label>
+            <input type="text" id="brand" required>
+        </div>
+        <div>
+            <label for="serial">Número de Serie</label>
+            <input type="text" id="serial">
+        </div>
+        <div>
+            <label for="location">Ubicación Actual</label>
+            <input type="text" id="location">
+        </div>
+        <div>
+            <label for="quality">Estado/Calidad</label>
+            <select id="quality" required>
+                <option value="Excelente">Excelente</option>
+                <option value="Bueno">Bueno</option>
+                <option value="Aceptable">Aceptable</option>
+                <option value="Requiere Mantenimiento">Requiere Mantenimiento</option>
+            </select>
+        </div>
+        <div>
+            <label for="cost">Costo ($)</label>
+            <input type="number" id="cost" min="0" step="0.01">
+        </div>
+        <div>
+            <label for="date">Fecha de Adquisición</label>
+            <input type="date" id="date">
+        </div>
+        <div class="full-width">
+            <label for="notes">Notas/Especificaciones Clave</label>
+            <textarea id="notes" rows="2"></textarea>
+        </div>
+    </div>
+    
+    <button id="addButton" onclick="addItem()">➕ Agregar al Inventario</button>
+    <button id="exportButton" onclick="exportToExcel()">📊 Exportar a Excel (CSV)</button>
+
+    <hr>
+    
+    <h2>Inventario Actual</h2>
+    <table id="inventoryTable">
+        <thead>
+            <tr>
+                <th>ID de Activo</th>
+                <th>Categoría</th>
+                <th>Modelo</th>
+                <th>Marca</th>
+                <th>Serie</th>
+                <th>Ubicación</th>
+                <th>Calidad</th>
+                <th>Costo</th>
+                <th>Fecha Adq.</th>
+                <th>Notas</th>
+            </tr>
+        </thead>
+        <tbody>
+            </tbody>
+    </table>
+</div>
+
+<script>
+    const tableBody = document.getElementById('inventoryTable').getElementsByTagName('tbody')[0];
+    
+    /**
+     * Función para agregar un ítem del formulario a la tabla.
+     */
+    function addItem() {
+        // 1. Obtener valores del formulario
+        const assetID = document.getElementById('assetID').value.trim();
+        const category = document.getElementById('category').value;
+        const model = document.getElementById('model').value.trim();
+        const brand = document.getElementById('brand').value.trim();
+        const serial = document.getElementById('serial').value.trim();
+        const location = document.getElementById('location').value.trim();
+        const quality = document.getElementById('quality').value;
+        // Formatear el costo para que se exporte como número simple
+        const cost = document.getElementById('cost').value; 
+        const date = document.getElementById('date').value;
+        const notes = document.getElementById('notes').value.trim().replace(/,/g, ' '); // Eliminar comas para CSV
+
+        // 2. Validar campos requeridos
+        if (!assetID || !category || !model || !brand) {
+            alert('Por favor, complete los campos obligatorios: ID, Categoría, Modelo y Marca.');
+            return;
+        }
+
+        // 3. Crear nueva fila (<tr>)
+        const newRow = tableBody.insertRow();
+        
+        // 4. Crear celdas (<td>) y asignar valores
+        const data = [assetID, category, model, brand, serial, location, quality, cost, date, notes];
+        
+        data.forEach(item => {
+            let cell = newRow.insertCell();
+            cell.textContent = item;
+        });
+
+        // 5. Limpiar formulario después de agregar
+        document.getElementById('assetID').value = '';
+        document.getElementById('category').value = '';
+        document.getElementById('model').value = '';
+        document.getElementById('brand').value = '';
+        document.getElementById('serial').value = '';
+        document.getElementById('location').value = '';
+        document.getElementById('quality').value = 'Excelente';
+        document.getElementById('cost').value = '';
+        document.getElementById('date').value = '';
+        document.getElementById('notes').value = '';
+        
+        document.getElementById('assetID').focus(); // Vuelve a enfocar el primer campo
+    }
+    
+    /**
+     * Función para exportar los datos de la tabla a un archivo CSV (Excel).
+     */
+    function exportToExcel() {
+        const rows = tableBody.querySelectorAll('tr');
+        let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; // \uFEFF es el BOM para asegurar que Excel use UTF-8
+
+        // 1. Obtener encabezados
+        const headerCells = document.querySelectorAll('#inventoryTable thead th');
+        let header = Array.from(headerCells).map(th => th.textContent).join(';'); // Usamos punto y coma (;) como separador para compatibilidad con Excel.
+        csvContent += header + "\n";
+
+        // 2. Obtener datos de las filas
+        rows.forEach(row => {
+            const rowData = [];
+            const cells = row.querySelectorAll('td');
+            
+            cells.forEach(cell => {
+                // Prepara el texto, escapando cualquier punto y coma que pueda haber en las notas.
+                let text = cell.textContent.replace(/"/g, '""'); // Escapar comillas dobles
+                rowData.push(`"${text}"`); // Encerrar cada campo entre comillas para manejar espacios y caracteres especiales
+            });
+            csvContent += rowData.join(';') + "\n";
+        });
+
+        // 3. Crear enlace de descarga
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", "Inventario_AV_" + new Date().toISOString().slice(0, 10) + ".csv");
+        document.body.appendChild(link); // Requerido para Firefox
+        link.click();
+        document.body.removeChild(link);
+    }
+</script>
+
+</body>
+</html>
